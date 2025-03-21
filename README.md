@@ -1,7 +1,7 @@
-# 🚀 PDF Unlocker
+# 🚀 Free PDF Unlocker
 
 A simple web-based PDF Unlocker that allows users to upload a password-protected PDF, enter the password, and download the unlocked version. This project uses **Flask** for the backend and **Nginx** for serving the frontend, all containerized with **Docker & Docker Compose**.
-
+![PDF Unlocker Preview](image.png)
 ## 🛠 Features
 - Upload a **locked PDF**
 - Enter **password** to unlock it
