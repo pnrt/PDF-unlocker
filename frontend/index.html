@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Unlocker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            text-align: center;
+            padding: 20px;
+            flex-direction: column;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+        }
+        h2 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        input, button {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        input {
+            background: #fff;
+            color: #333;
+            outline: none;
+        }
+        .password-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        #passwordInput {
+            flex: 1;
+            padding-right: 40px;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            cursor: pointer;
+            color: #333;
+        }
+        button {
+            background: #ff7eb3;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:hover {
+            background: #ff589e;
+        }
+        #downloadLink {
+            display: none;
+            text-decoration: none;
+            background: #2ecc71;
+            padding: 12px;
+            color: white;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: inline-block;
+            font-weight: bold;
+        }
+        #downloadLink:hover {
+            background: #27ae60;
+        }
+        #status {
+            margin-top: 10px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .pdf-preview {
+            margin-top: 20px;
+            display: none;
+            width: 100%;
+            max-height: 300px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        #resetButton {
+            background: #ffcc00;
+            color: #333;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+        #resetButton:hover {
+            background: #ffb300;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Unlock Your PDF</h2>
+        <input type="file" id="pdfInput" accept="application/pdf"><br>
+        
+        <div class="password-container">
+            <input type="password" id="passwordInput" placeholder="Enter PDF Password">
+            <span class="toggle-password" onclick="togglePassword()">👁️</span>
+        </div>
+
+        <button onclick="uploadPDF()">Unlock PDF</button>
+        <p id="status"></p>
+        <a id="downloadLink">Download Unlocked PDF</a>
+
+        <iframe id="pdfPreview" class="pdf-preview"></iframe>
+
+        <button id="resetButton" onclick="resetForm()">Reset</button>
+
+    </div>
+
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById("passwordInput");
+            passwordInput.type = passwordInput.type === "password" ? "text" : "password";
+        }
+
+        async function uploadPDF() {
+            const fileInput = document.getElementById("pdfInput");
+            const passwordInput = document.getElementById("passwordInput");
+            const status = document.getElementById("status");
+            const downloadLink = document.getElementById("downloadLink");
+            const pdfPreview = document.getElementById("pdfPreview");
+
+            if (fileInput.files.length === 0) {
+                alert("Please select a PDF file.");
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const password = passwordInput.value.trim();
+
+            if (!password) {
+                alert("Please enter the password.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("password", password);
+
+            status.textContent = "Uploading and unlocking...";
+
+            try {
+                const response = await fetch("/unlock", { //http://localhost:5000/unlock
+                    method: "POST",
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error("Failed to unlock PDF. Check the password.");
+                }
+
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+
+                // Use the original filename and append "_unlocked.pdf"
+                const originalName = file.name.replace(/\.pdf$/i, "");
+                const newFilename = `${originalName}_unlocked.pdf`;
+
+                downloadLink.href = url;
+                downloadLink.download = newFilename;
+                downloadLink.style.display = "block";
+                downloadLink.textContent = `Download ${newFilename}`;
+                status.textContent = "Unlocking complete!";
+
+                // Show PDF Preview
+                pdfPreview.src = url;
+                pdfPreview.style.display = "block";
+
+            } catch (error) {
+                status.textContent = "Error: " + error.message;
+            }
+        }
+
+        function resetForm() {
+            document.getElementById("pdfInput").value = "";
+            document.getElementById("passwordInput").value = "";
+            document.getElementById("pdfPreview").style.display = "none";
+            document.getElementById("downloadLink").style.display = "none";
+            document.getElementById("status").textContent = "";
+        }
+
+        window.onload = function () {
+            document.getElementById("downloadLink").style.display = "none";
+            document.getElementById("pdfPreview").style.display = "none";
+        };
+
+    </script>
+
+</body>
+</html>

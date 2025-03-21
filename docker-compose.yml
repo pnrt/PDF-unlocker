@@ -1,0 +1,15 @@
+version: '3'
+services:
+  backend:
+    image: pnrt/pdf-unlocker-backend:0.1
+    ports:
+      - "5000:5000"
+    restart: always
+
+  frontend:
+    image: pnrt/pdf-unlocker-frontend:0.1
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    restart: always
